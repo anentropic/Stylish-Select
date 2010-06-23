@@ -4,7 +4,7 @@ http://github.com/sko77sun/Stylish-Select
 
 Requires: jQuery 1.3 or newer
 
-Contributions from Justin Beasley: http://www.harvest.org/ & Anatoly Ressin: http://www.artazor.lv/
+Contributions from Justin Beasley: http://www.harvest.org/ & Anatoly Ressin: http://www.artazor.lv/ & Paul G http://anentropic.wordpress.com/
 
 Dual licensed under the MIT and GPL licenses.
 
@@ -20,23 +20,25 @@ Dual licensed under the MIT and GPL licenses.
 				return i;
 			}
 		}
+        return -1;
 	}
 
 	//utility methods
 	$.fn.extend({
 		getSetSSValue: function(value){
+			$this = $(this);
 			if (value){
 				//set value and trigger change event
-				$(this).val(value).change();
+				$this.val(value).change();
 				return this;
 			} else {
-				return $(this).find(':selected').val();
+				return $this.find(':selected').val();
 			}
 		},
 		//added by Justin Beasley
 		resetSS: function(){
-			var oldOpts = $(this).data('ssOpts');
 			$this = $(this);
+			var oldOpts = $this.data('ssOpts');
 			$this.next().remove();
 			//unbind all events and redraw
 			$this.unbind('.sSelect').sSelect(oldOpts);
@@ -46,87 +48,76 @@ Dual licensed under the MIT and GPL licenses.
 	$.fn.sSelect = function(options) {
 
 		return this.each(function(){
-
-		var defaults = {
-			defaultText: 'Please select',
-			animationSpeed: 0, //set speed of dropdown
-			ddMaxHeight: '', //set css max-height value of dropdown
-			containerClass: '' //additional classes for container div
-		};
-
-		//initial variables
-		var opts = $.extend(defaults, options),
-		$input = $(this),
-		$containerDivText = $('<div class="selectedTxt"></div>'),
-		$containerDiv = $('<div class="newListSelected ' + opts.containerClass + '"></div>'),
-		$newUl = $('<ul class="newList" style="visibility:hidden;"></ul>'),
-		itemIndex = -1,
-		currentIndex = -1,
-		keys = [],
-		prevKey = false,
-		prevented = false,
-		$newLi;
-
-		//added by Justin Beasley
-		$(this).data('ssOpts',options);
-
-		//build new list
-		$containerDiv.insertAfter($input);
-		$containerDiv.attr("tabindex", $input.attr("tabindex") || "0");
-		$containerDivText.prependTo($containerDiv);
-		$newUl.appendTo($containerDiv);
-		$input.hide();
-
-		//added by Justin Beasley (used for lists initialized while hidden)
-		$containerDivText.data('ssReRender',!$containerDivText.is(':visible'));
-
-            //test for optgroup
-            if ($input.children('optgroup').length == 0){
-                $input.children().each(function(i){
-                    var option = $(this).html();
-                    var key = $(this).val();
-
-                    //add first letter of each word to array
-                    keys.push(option.charAt(0).toLowerCase());
-                    if ($(this).attr('selected') == true){
-                        opts.defaultText = option;
-                        currentIndex = i;
-                    }
-                    $newUl.append($('<li><a href="JavaScript:void(0);">'+option+'</a></li>').data('key', key));
-
-                });
-                //cache list items object
-                $newLi = $newUl.children().children();
-
-            } else { //optgroup
-                $input.children('optgroup').each(function(){
-
-                    var optionTitle = $(this).attr('label'),
-                    $optGroup = $('<li class="newListOptionTitle">'+optionTitle+'</li>');
-
-                    $optGroup.appendTo($newUl);
-
-                    var $optGroupList = $('<ul></ul>');
-
-                    $optGroupList.appendTo($optGroup);
-
-                    $(this).children().each(function(){
-                        ++itemIndex;
-                        var option = $(this).html();
-                        var key = $(this).val();
-                        //add first letter of each word to array
-                        keys.push(option.charAt(0).toLowerCase());
-                        if ($(this).attr('selected') == true){
-                            opts.defaultText = option;
-                            currentIndex = itemIndex;
-                        }
-                        $optGroupList.append($('<li><a href="JavaScript:void(0);">'+option+'</a></li>').data('key',key));
-                    })
-                });
-                //cache list items object
-                $newLi = $newUl.find('ul li a');
+            var defaults = {
+                defaultText: 'Please select',
+                animationSpeed: 0, //set speed of dropdown
+                ddMaxHeight: '', //set css max-height value of dropdown
+                containerClass: '' //additional classes for container div
+            };
+    
+            //initial variables
+            var opts = $.extend(defaults, options),
+            $input = $(this),
+            $containerDivText = $('<div class="selectedTxt"></div>'),
+            $containerDiv = $('<div class="newListSelected ' + opts.containerClass + '"></div>'),
+            $newUl = $('<ul class="newList" style="visibility:hidden;"></ul>'),
+            itemIndex = -1,
+            currentIndex = -1,
+            keys = [],
+            prevKey = false,
+            prevented = false,
+            $newLi;
+    
+            //added by Justin Beasley
+            $input.data('ssOpts',options);
+    
+            //build new list
+            $containerDiv.insertAfter($input);
+            $containerDiv.attr("tabindex", $input.attr("tabindex") || "0");
+            $containerDivText.prependTo($containerDiv);
+            $newUl.appendTo($containerDiv);
+            $input.hide();
+    
+            //added by Justin Beasley (used for lists initialized while hidden)
+            $containerDivText.data('ssReRender',!$containerDivText.is(':visible'));
+            
+            function addOption(i, $el, $appendTo) {
+                var option = $el.html();
+                var key = $el.val();
+                
+                //add first letter of each word to array
+                keys.push(option.charAt(0).toLowerCase());
+                if ($el.attr('selected') == true){
+                    opts.defaultText = option;
+                    currentIndex = i;
+                }
+                $appendTo.append($('<li><a href="JavaScript:void(0);">'+option+'</a></li>').data('key', key));
             }
-
+            
+            $input.children().each(function(i){
+                var $this = $(this);
+                if (this.tagName.toLowerCase() == 'optgroup') {
+                    var optionTitle = $this.attr('label'),
+                    $optGroup = $('<li class="newListOptionTitle">'+optionTitle+'</li>');
+                    
+                    $optGroup.appendTo($newUl);
+                    
+                    var $optGroupList = $('<ul></ul>');
+                    
+                    $optGroupList.appendTo($optGroup);
+                    $this.children().each(function(){
+                        ++itemIndex;
+                        addOption(itemIndex, $(this), $optGroupList);
+                    })
+                } else {
+                    ++itemIndex;
+                    addOption(i, $this, $newUl);
+                }
+            });
+            //cache list items object
+            $newLi = $newUl.find('a');
+            
+            
             //get heights of new elements for use later
             var newUlHeight = $newUl.height(),
             containerHeight = $containerDiv.height(),
@@ -184,17 +175,17 @@ Dual licensed under the MIT and GPL licenses.
 
             $containerDivText.bind('click.sSelect',function(event){
                 event.stopPropagation();
-
+                var $this = $(this);
 				//added by Justin Beasley
-				if($(this).data('ssReRender')) {
+				if($this.data('ssReRender')) {
 					newUlHeight = $newUl.height('').height();
 					containerHeight = $containerDiv.height();
-					$(this).data('ssReRender',false);
+					$this.data('ssReRender',false);
 					newUlPos();
 				}
 
                 //hide all menus apart from this one
-				$('.newList').not($(this).next()).hide()
+				$('.newList').not($this.next()).hide()
                     .parent()
                         .css('position', 'static')
                         .removeClass('newListSelFocus');
@@ -252,12 +243,12 @@ Dual licensed under the MIT and GPL licenses.
                     return false;
                 }
 
-		try {
-		    $input.val(val)
-		} catch(ex) {
-		    // handle ie6 exception
-		    $input[0].selectedIndex = currentIndex;
-		}
+                try {
+                    $input.val(val)
+                } catch(ex) {
+                    // handle ie6 exception
+                    $input[0].selectedIndex = currentIndex;
+                }
 
                 $input.change();
                 $containerDivText.text(text);
